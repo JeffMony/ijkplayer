@@ -3324,8 +3324,17 @@ static int read_thread(void *arg)
         toggle_pause(ffp, 1);
     if (is->video_st && is->video_st->codecpar) {
         AVCodecParameters *codecpar = is->video_st->codecpar;
-        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, codecpar->width, codecpar->height);
-        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codecpar->sample_aspect_ratio.num, codecpar->sample_aspect_ratio.den);
+        int codec_num = codecpar->sample_aspect_ratio.num;
+        int codec_den = codecpar->sample_aspect_ratio.den;
+        int width = codecpar->width;
+        int height = codecpar->height;
+        int dar_num;
+        int dar_den;
+        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_SIZE_CHANGED, width, height);
+        ffp_notify_msg3(ffp, FFP_MSG_SAR_CHANGED, codec_num, codec_den);
+        av_reduce(&dar_num, &dar_den, width * (int64_t)codec_num, height * (int64_t)codec_den, 1024 * 1024);
+        av_log(NULL, AV_LOG_ERROR, "litianpeng dar_width=%d, dar_height=%d", dar_num, dar_den);
+        ffp_notify_msg3(ffp, FFP_MSG_VIDEO_DAR_CHANGED, dar_num, dar_den);
     }
     ffp->prepared = true;
     ffp_notify_msg1(ffp, FFP_MSG_PREPARED);
